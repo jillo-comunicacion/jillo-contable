@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jillo — Sistema Contable</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f5f3;
+  --white: #ffffff;
+  --border: #e8e8e4;
+  --border2: #d8d8d2;
+  --text: #1a1a18;
+  --text2: #6b6b65;
+  --text3: #9b9b93;
+  --green: #1a7a4a;
+  --green-bg: #e8f5ee;
+  --red: #c0392b;
+  --red-bg: #fdecea;
+  --orange: #c05c1a;
+  --orange-bg: #fef0e6;
+  --blue: #1a5fa0;
+  --blue-bg: #e6f0fa;
+  --yellow: #8a6800;
+  --yellow-bg: #fef9e6;
+  --accent: #2d6be4;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; font-size: 14px; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0; width: 240px;
+  background: var(--white); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; z-index: 100;
+}
+.logo-area {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.logo-mark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; background: var(--text); border-radius: 10px;
+  font-size: 16px; font-weight: 800; color: white; letter-spacing: -1px;
+  margin-bottom: 10px;
+}
+.logo-name { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+.logo-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+.nav { flex: 1; padding: 12px 10px; overflow-y: auto; }
+.nav-section {
+  font-size: 10px; font-weight: 700; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 1px;
+  padding: 12px 10px 6px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 8px; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: var(--text2);
+  transition: all 0.12s; margin-bottom: 1px;
+}
+.nav-item:hover { background: var(--bg); color: var(--text); }
+.nav-item.active { background: var(--text); color: white; }
+.nav-item.active .nav-badge { background: rgba(255,255,255,0.2); color: white; }
+.nav-icon { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto; background: var(--red-bg); color: var(--red);
+  font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+}
+
+.sidebar-bottom {
+  padding: 16px 20px; border-top: 1px solid var(--border);
+}
+.mes-actual-label {
+  font-size: 11px; color: var(--text3); margin-bottom: 4px;
+}
+.mes-actual-val {
+  font-size: 13px; font-weight: 700; color: var(--text);
+}
+
+/* ── MAIN ── */
+.main { margin-left: 240px; padding: 28px 32px; min-height: 100vh; max-width: 1200px; }
+.page { display: none; }
+.page.active { display: block; animation: fadeUp 0.18s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+/* ── PAGE HEADER ── */
+.page-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 24px;
+}
+.page-title { font-size: 24px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+.page-sub { font-size: 13px; color: var(--text3); margin-top: 3px; }
+.header-right { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+/* ── MONTH NAV ── */
+.month-nav { display: flex; align-items: center; gap: 6px; background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 4px 6px; }
+.month-nav button { background: none; border: none; cursor: pointer; color: var(--text2); width: 24px; height: 24px; border-radius: 5px; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: all 0.1s; }
+.month-nav button:hover { background: var(--bg); color: var(--text); }
+.month-label { font-size: 12px; font-weight: 700; color: var(--text); min-width: 100px; text-align: center; }
+
+/* ── CARDS ── */
+.cards-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+.card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+.card-icon { font-size: 20px; margin-bottom: 10px; }
+.card-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+.card-value { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; line-height: 1; }
+.card-delta { font-size: 12px; color: var(--text3); margin-top: 6px; }
+.card.green .card-value { color: var(--green); }
+.card.red .card-value { color: var(--red); }
+.card.orange .card-value { color: var(--orange); }
+.card.blue .card-value { color: var(--blue); }
+.card.accent .card-value { color: var(--accent); }
+
+/* ── PANEL ── */
+.panel {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 12px; margin-bottom: 16px;
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.panel-header {
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.panel-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.panel-meta { font-size: 12px; color: var(--text3); }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+
+/* ── STRIP SUMMARY ── */
+.strip {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  border-bottom: 1px solid var(--border);
+}
+.strip-item { padding: 14px 20px; text-align: center; border-right: 1px solid var(--border); }
+.strip-item:last-child { border-right: none; }
+.strip-val { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+.strip-lbl { font-size: 11px; color: var(--text3); margin-top: 3px; font-weight: 600; }
+
+/* ── TABLE ── */
+table { width: 100%; border-collapse: collapse; }
+th {
+  font-size: 11px; font-weight: 700; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  padding: 10px 20px; text-align: left;
+  border-bottom: 1px solid var(--border); background: var(--bg);
+}
+td { padding: 13px 20px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafafa; }
+.td-muted { color: var(--text3); font-size: 12px; }
+.td-mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+
+/* ── BADGE ── */
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+.badge-green { background: var(--green-bg); color: var(--green); }
+.badge-red { background: var(--red-bg); color: var(--red); }
+.badge-orange { background: var(--orange-bg); color: var(--orange); }
+.badge-blue { background: var(--blue-bg); color: var(--blue); }
+.badge-gray { background: var(--bg); color: var(--text3); border: 1px solid var(--border); }
+.badge-yellow { background: var(--yellow-bg); color: var(--yellow); }
+
+/* ── BUTTONS ── */
+.btn { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 12px; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.12s; display: inline-flex; align-items: center; gap: 5px; }
+.btn-primary { background: var(--text); color: white; }
+.btn-primary:hover { background: #333; transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn-ghost { background: white; color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+.btn-danger-soft { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 13px; padding: 4px 6px; border-radius: 5px; transition: all 0.1s; }
+.btn-danger-soft:hover { color: var(--red); background: var(--red-bg); }
+.btn-edit-soft { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 11px; font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif; padding: 4px 8px; border-radius: 5px; transition: all 0.1s; }
+.btn-edit-soft:hover { color: var(--accent); background: var(--blue-bg); }
+
+/* ── PAGO BTN ── */
+.pago-btn {
+  font-size: 11px; font-weight: 700; padding: 5px 12px;
+  border-radius: 20px; border: none; cursor: pointer;
+  transition: all 0.12s; font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.pago-btn.pagado { background: var(--green-bg); color: var(--green); }
+.pago-btn.pendiente { background: var(--red-bg); color: var(--red); }
+.pago-btn.futuro { background: var(--bg); color: var(--text3); cursor: default; pointer-events: none; }
+.pago-btn:not(.futuro):hover { transform: scale(1.04); }
+
+/* ── MODAL ── */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+.overlay.open { display: flex; }
+.modal { background: white; border-radius: 16px; padding: 28px; width: 480px; max-width: 95vw; max-height: 92vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.15); animation: modalIn 0.18s ease; }
+@keyframes modalIn { from { opacity:0; transform:translateY(12px) scale(0.98); } to { opacity:1; transform:none; } }
+.modal-title { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 20px; letter-spacing: -0.3px; }
+.modal-subtitle { font-size: 13px; color: var(--text3); margin-top: -14px; margin-bottom: 20px; }
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+.form-input, .form-select {
+  width: 100%; background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 10px 12px; color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px;
+  outline: none; transition: border-color 0.12s;
+}
+.form-input:focus, .form-select:focus { border-color: var(--accent); background: white; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modal-actions { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
+.modal-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+/* ── PROGRESS ── */
+.prog { background: var(--border); border-radius: 4px; height: 5px; overflow: hidden; margin-top: 6px; }
+.prog-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+
+/* ── DEBT ITEM ── */
+.debt-item { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.debt-item:last-child { border-bottom: none; }
+
+/* ── ALERT ── */
+.alert { display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; border-radius: 10px; margin-bottom: 10px; }
+.alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.alert-text { font-size: 13px; line-height: 1.4; }
+.alert-title { font-weight: 700; margin-bottom: 2px; }
+.alert.warning { background: var(--yellow-bg); color: var(--yellow); }
+.alert.danger { background: var(--red-bg); color: var(--red); }
+.alert.info { background: var(--blue-bg); color: var(--blue); }
+.alert.success { background: var(--green-bg); color: var(--green); }
+
+/* ── CIERRE ── */
+.cierre-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--border); }
+.cierre-row:last-child { border-bottom: none; }
+.cierre-row.total { background: var(--bg); }
+.cierre-label { font-size: 13px; color: var(--text2); }
+.cierre-val { font-size: 14px; font-weight: 700; font-family: 'DM Mono', monospace; }
+
+/* ── IMPUESTO ── */
+.imp-item { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.imp-item:last-child { border-bottom: none; }
+.imp-name { font-size: 13px; font-weight: 600; }
+.imp-detail { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.imp-monto { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 600; color: var(--red); }
+
+/* ── GF ROW ── */
+.gf-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 20px; border-bottom: 1px solid var(--border); }
+.gf-row:last-child { border-bottom: none; }
+
+/* ── TOAST ── */
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--text); color: white; font-weight: 600; font-size: 13px; padding: 10px 18px; border-radius: 10px; z-index: 999; opacity: 0; transform: translateY(6px); transition: all 0.25s; pointer-events: none; box-shadow: var(--shadow-md); }
+.toast.show { opacity: 1; transform: none; }
+
+/* ── EMPTY ── */
+.empty { padding: 48px 20px; text-align: center; color: var(--text3); }
+.empty-emoji { font-size: 32px; margin-bottom: 10px; }
+.empty-txt { font-size: 13px; line-height: 1.5; }
+
+/* ── GRILLA ── */
+.grilla-wrap { overflow-x: auto; }
+.grilla { border-collapse: collapse; min-width: 100%; }
+.grilla th { white-space: nowrap; }
+.grilla td { white-space: nowrap; }
+.grilla .col-cliente { min-width: 160px; }
+.grilla .col-mes { text-align: center; min-width: 80px; }
+.grilla .col-mes th { text-align: center; }
+
+/* ── HISTORIAL MESES ── */
+.hist-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-bottom: 1px solid var(--border); }
+.hist-item:last-child { border-bottom: none; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo-area">
+    <div class="logo-mark">J</div>
+    <div class="logo-name">Jillo</div>
+    <div class="logo-sub">Sistema de gestión contable</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Inicio</div>
+    <div class="nav-item active" onclick="goTo('dashboard')"><span class="nav-icon">🏠</span>Dashboard</div>
+    <div class="nav-item" onclick="goTo('cierre')"><span class="nav-icon">📊</span>Cierre mensual</div>
+    <div class="nav-section">Ingresos</div>
+    <div class="nav-item" onclick="goTo('grilla')"><span class="nav-icon">🗂</span>Vista grilla</div>
+    <div class="nav-item" onclick="goTo('fijos')"><span class="nav-icon">🔄</span>Clientes fijos</div>
+    <div class="nav-item" onclick="goTo('proyectos')"><span class="nav-icon">⭐</span>Proyectos</div>
+    <div class="nav-section">Egresos</div>
+    <div class="nav-item" onclick="goTo('colaboradores')"><span class="nav-icon">👥</span>Colaboradores</div>
+    <div class="nav-item" onclick="goTo('gastosfijos')"><span class="nav-icon">🏷</span>Gastos fijos</div>
+    <div class="nav-item" onclick="goTo('impuestos')"><span class="nav-icon">🏛</span>Impuestos</div>
+    <div class="nav-item" onclick="goTo('egresos')"><span class="nav-icon">💸</span>Otros egresos</div>
+    <div class="nav-section">Pendientes</div>
+    <div class="nav-item" onclick="goTo('deudas')"><span class="nav-icon">⏳</span>Deudas por cobrar</div>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="mes-actual-label">Mes activo</div>
+    <div class="mes-actual-val" id="sb-mes">—</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ══ DASHBOARD ══ -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Buenos días, Jillo 👋</div>
+      <div class="page-sub">Así están los números hoy</div>
+    </div>
+    <div class="month-nav">
+      <button onclick="cambiarMes(-1)">‹</button>
+      <div class="month-label" id="dash-mes">—</div>
+      <button onclick="cambiarMes(1)">›</button>
+    </div>
+  </div>
+
+  <div id="dash-alertas" style="margin-bottom:16px"></div>
+
+  <div class="cards-row">
+    <div class="card green"><div class="card-icon">💰</div><div class="card-label">Cobrado este mes</div><div class="card-value" id="d-cob">$ 0</div><div class="card-delta" id="d-cob-s">0 de 0 clientes</div></div>
+    <div class="card blue"><div class="card-icon">📋</div><div class="card-label">Potencial del mes</div><div class="card-value" id="d-pot">$ 0</div><div class="card-delta">Si todos pagan</div></div>
+    <div class="card red"><div class="card-icon">📤</div><div class="card-label">Total egresos</div><div class="card-value" id="d-eg">$ 0</div><div class="card-delta">Sueldos + gastos + impuestos</div></div>
+    <div class="card accent"><div class="card-icon">📈</div><div class="card-label">Ganancia neta</div><div class="card-value" id="d-gan">$ 0</div><div class="card-delta" id="d-gan-s">Cobrado − egresos</div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">💼 Estado de cobros</span><span class="panel-meta" id="d-cobros-meta"></span></div>
+      <div id="dash-cobros"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">📉 Desglose de egresos</span></div>
+      <div id="dash-egresos-detalle" style="padding:16px 20px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CIERRE MENSUAL ══ -->
+<div class="page" id="page-cierre">
+  <div class="page-header">
+    <div><div class="page-title">Cierre Mensual</div><div class="page-sub">Resultado real de Jillo mes a mes</div></div>
+    <div class="month-nav">
+      <button onclick="cambiarMes(-1)">‹</button>
+      <div class="month-label" id="cierre-mes">—</div>
+      <button onclick="cambiarMes(1)">›</button>
+    </div>
+  </div>
+  <div class="two-col">
+    <div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Resultado del mes</span></div>
+        <div class="cierre-row"><span class="cierre-label">✅ Ingresos cobrados</span><span class="cierre-val" id="c-ingresos" style="color:var(--green)">$ 0</span></div>
+        <hr class="modal-divider" style="margin:0;border-color:var(--border)">
+        <div class="cierre-row"><span class="cierre-label">👥 Sueldos equipo</span><span class="cierre-val" id="c-sueldos" style="color:var(--red)">$ 0</span></div>
+        <div class="cierre-row"><span class="cierre-label">🏷 Gastos fijos</span><span class="cierre-val" id="c-gf" style="color:var(--red)">$ 0</span></div>
+        <div class="cierre-row"><span class="cierre-label">🏛 Impuestos</span><span class="cierre-val" id="c-imp" style="color:var(--red)">$ 0</span></div>
+        <div class="cierre-row"><span class="cierre-label">💸 Otros egresos</span><span class="cierre-val" id="c-otros" style="color:var(--red)">$ 0</span></div>
+        <hr class="modal-divider" style="margin:0;border-color:var(--border)">
+        <div class="cierre-row total">
+          <span class="cierre-label" style="font-weight:700;color:var(--text)">🏆 Ganancia neta</span>
+          <span class="cierre-val" id="c-neta" style="font-size:18px">$ 0</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Margen del negocio</span></div>
+        <div style="padding:16px 20px" id="c-margen-area"></div>
+      </div>
+    </div>
+    <div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">📆 Historial de cierres</span></div>
+        <div id="historial-cierres"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GRILLA ══ -->
+<div class="page" id="page-grilla">
+  <div class="page-header">
+    <div><div class="page-title">Vista Grilla</div><div class="page-sub">Todos los clientes · Estado de cobros por mes</div></div>
+    <span id="grilla-total" class="badge badge-orange" style="font-size:12px;padding:6px 12px"></span>
+  </div>
+  <div class="panel">
+    <div class="grilla-wrap"><div id="grilla-contenido"></div></div>
+  </div>
+</div>
+
+<!-- ══ CLIENTES FIJOS ══ -->
+<div class="page" id="page-fijos">
+  <div class="page-header">
+    <div><div class="page-title">Clientes Fijos</div><div class="page-sub">Retainer mensual · Honorarios y cobros</div></div>
+    <div class="header-right">
+      <div class="month-nav"><button onclick="cambiarMes(-1)">‹</button><div class="month-label" id="fijos-mes">—</div><button onclick="cambiarMes(1)">›</button></div>
+      <button class="btn btn-ghost" onclick="openModal('modal-cf')">+ Agregar cliente</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="strip">
+      <div class="strip-item"><div class="strip-val" id="r-cob" style="color:var(--green)">$ 0</div><div class="strip-lbl">Cobrado</div></div>
+      <div class="strip-item"><div class="strip-val" id="r-pend" style="color:var(--red)">$ 0</div><div class="strip-lbl">Pendiente</div></div>
+      <div class="strip-item"><div class="strip-val" id="r-tot" style="color:var(--blue)">$ 0</div><div class="strip-lbl">Total potencial</div></div>
+    </div>
+    <div id="tabla-fijos"></div>
+  </div>
+</div>
+
+<!-- ══ PROYECTOS ══ -->
+<div class="page" id="page-proyectos">
+  <div class="page-header">
+    <div><div class="page-title">Proyectos</div><div class="page-sub">Trabajos puntuales · Sin retainer mensual</div></div>
+    <button class="btn btn-primary" onclick="openModal('modal-proy')">+ Nuevo proyecto</button>
+  </div>
+  <div class="panel"><div id="tabla-proyectos"></div></div>
+</div>
+
+<!-- ══ COLABORADORES ══ -->
+<div class="page" id="page-colaboradores">
+  <div class="page-header">
+    <div><div class="page-title">Colaboradores</div><div class="page-sub">Equipo Jillo · Horas trabajadas y sueldos</div></div>
+    <div class="header-right">
+      <div class="month-nav"><button onclick="cambiarMes(-1)">‹</button><div class="month-label" id="colab-mes">—</div><button onclick="cambiarMes(1)">›</button></div>
+      <button class="btn btn-ghost" onclick="openModal('modal-colab')">+ Agregar colaborador</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="strip">
+      <div class="strip-item"><div class="strip-val" id="rc-tot" style="color:var(--red)">$ 0</div><div class="strip-lbl">Total a pagar</div></div>
+      <div class="strip-item"><div class="strip-val" id="rc-pag" style="color:var(--green)">$ 0</div><div class="strip-lbl">Pagado</div></div>
+      <div class="strip-item"><div class="strip-val" id="rc-pen" style="color:var(--orange)">$ 0</div><div class="strip-lbl">Pendiente</div></div>
+    </div>
+    <div id="tabla-colab"></div>
+  </div>
+</div>
+
+<!-- ══ GASTOS FIJOS ══ -->
+<div class="page" id="page-gastosfijos">
+  <div class="page-header">
+    <div><div class="page-title">Gastos Fijos</div><div class="page-sub">Gastos recurrentes todos los meses</div></div>
+    <div class="header-right">
+      <div class="month-nav"><button onclick="cambiarMes(-1)">‹</button><div class="month-label" id="gf-mes">—</div><button onclick="cambiarMes(1)">›</button></div>
+      <button class="btn btn-ghost" onclick="openModal('modal-gf')">+ Agregar gasto fijo</button>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Conceptos fijos</span><span class="panel-meta" id="gf-total-lbl"></span></div>
+      <div id="lista-gf"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Pagos de <span id="gf-mes2">—</span></span></div>
+      <div id="tabla-gf-mes"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ IMPUESTOS ══ -->
+<div class="page" id="page-impuestos">
+  <div class="page-header">
+    <div><div class="page-title">Impuestos</div><div class="page-sub">Monotributo · Ingresos Brutos · AFIP</div></div>
+    <div class="header-right">
+      <div class="month-nav"><button onclick="cambiarMes(-1)">‹</button><div class="month-label" id="imp-mes">—</div><button onclick="cambiarMes(1)">›</button></div>
+      <button class="btn btn-ghost" onclick="openModal('modal-imp-config')">⚙ Configurar</button>
+    </div>
+  </div>
+
+  <div id="imp-alerta-recateg" style="margin-bottom:16px"></div>
+
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Obligaciones del mes</span></div>
+      <div id="lista-impuestos"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Configuración fiscal</span></div>
+      <div style="padding:16px 20px" id="imp-config-view"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OTROS EGRESOS ══ -->
+<div class="page" id="page-egresos">
+  <div class="page-header">
+    <div><div class="page-title">Otros Egresos</div><div class="page-sub">Gastos variables · No recurrentes</div></div>
+    <button class="btn btn-primary" onclick="openModal('modal-eg')">+ Nuevo egreso</button>
+  </div>
+  <div class="panel"><div id="tabla-egresos"></div></div>
+</div>
+
+<!-- ══ DEUDAS ══ -->
+<div class="page" id="page-deudas">
+  <div class="page-header">
+    <div><div class="page-title">Deudas por cobrar</div><div class="page-sub">Lo que te deben de trabajos anteriores</div></div>
+    <button class="btn btn-primary" onclick="openModal('modal-deu')">+ Registrar deuda</button>
+  </div>
+  <div class="panel"><div id="lista-deudas"></div></div>
+</div>
+
+</main>
+
+<!-- ═══════════ MODALES ═══════════ -->
+
+<!-- CLIENTE FIJO -->
+<div class="overlay" id="modal-cf">
+  <div class="modal">
+    <div class="modal-title" id="mcf-title">Agregar Cliente Fijo</div>
+    <input type="hidden" id="cf-eid">
+    <div class="form-group"><label class="form-label">Nombre del cliente</label><input class="form-input" id="cf-nombre" placeholder="Ej: Heladería del Parque"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Honorario mensual (ARS)</label><input class="form-input" id="cf-monto" type="number" placeholder="0"/></div>
+      <div class="form-group"><label class="form-label">Responsable</label><input class="form-input" id="cf-resp" placeholder="Nombre"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Servicio incluido</label><input class="form-input" id="cf-serv" placeholder="Ej: Gestión redes + diseño"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Contrato</label><select class="form-select" id="cf-cont"><option value="no">Sin contrato</option><option value="si">Con contrato</option></select></div>
+      <div class="form-group"><label class="form-label">Medio de pago</label><select class="form-select" id="cf-medio"><option>Transferencia</option><option>Efectivo</option><option>Mixto</option></select></div>
+    </div>
+    <div id="cf-nota-g" style="display:none" class="form-group"><label class="form-label">Nota del cambio</label><input class="form-input" id="cf-nota" placeholder="Ej: Actualización + nuevo servicio"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-cf')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCF()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGO DETALLADO -->
+<div class="overlay" id="modal-pago">
+  <div class="modal">
+    <div class="modal-title" id="mpago-title">Registrar pago</div>
+    <div class="modal-subtitle" id="mpago-sub"></div>
+    <input type="hidden" id="pago-cid">
+    <div class="form-group"><label class="form-label">Monto recibido (ARS)</label><input class="form-input" id="pago-monto" type="number" placeholder="0"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Medio de pago</label><select class="form-select" id="pago-medio"><option>Transferencia</option><option>Efectivo</option><option>Mixto</option></select></div>
+      <div class="form-group"><label class="form-label">¿Con factura?</label><select class="form-select" id="pago-fact"><option value="no">Sin factura</option><option value="si">Con factura</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notas</label><input class="form-input" id="pago-notas" placeholder="Opcional — pago parcial, cuota, etc."/></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-pago')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarPago()">Confirmar pago</button>
+    </div>
+  </div>
+</div>
+
+<!-- COLABORADOR -->
+<div class="overlay" id="modal-colab">
+  <div class="modal">
+    <div class="modal-title">Agregar Colaborador</div>
+    <div class="form-group"><label class="form-label">Nombre completo</label><input class="form-input" id="col-nombre" placeholder="Nombre"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Rol en Jillo</label><input class="form-input" id="col-rol" placeholder="Ej: Editor, Diseñador..."/></div>
+      <div class="form-group"><label class="form-label">Valor hora (ARS)</label><input class="form-input" id="col-tarifa" type="number" placeholder="0"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-colab')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarColab()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- HORAS -->
+<div class="overlay" id="modal-horas">
+  <div class="modal">
+    <div class="modal-title" id="mhoras-title">Cargar horas</div>
+    <input type="hidden" id="horas-cid">
+    <div class="form-group"><label class="form-label">Horas trabajadas este mes</label><input class="form-input" id="horas-cant" type="number" placeholder="0" min="0"/></div>
+    <div class="form-group"><label class="form-label">Estado de pago</label><select class="form-select" id="horas-estado"><option value="pendiente">Pendiente de pago</option><option value="pagado">Ya pagado</option></select></div>
+    <div class="form-group"><label class="form-label">Notas</label><input class="form-input" id="horas-notas" placeholder="Opcional"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-horas')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarHoras()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- GASTO FIJO -->
+<div class="overlay" id="modal-gf">
+  <div class="modal">
+    <div class="modal-title">Agregar Gasto Fijo</div>
+    <div class="form-group"><label class="form-label">Concepto</label><input class="form-input" id="gf-nombre" placeholder="Ej: Alquiler, Adobe, Internet..."/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Monto mensual (ARS)</label><input class="form-input" id="gf-monto" type="number" placeholder="0"/></div>
+      <div class="form-group"><label class="form-label">Categoría</label><select class="form-select" id="gf-cat"><option>Alquiler</option><option>Software</option><option>Internet / Telefonía</option><option>Servicios básicos</option><option>Contador</option><option>Seguro</option><option>Otro</option></select></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-gf')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarGF()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGO GASTO FIJO -->
+<div class="overlay" id="modal-gfp">
+  <div class="modal">
+    <div class="modal-title" id="mgfp-title">Registrar pago</div>
+    <input type="hidden" id="gfp-id">
+    <div class="form-group"><label class="form-label">Monto pagado (ARS)</label><input class="form-input" id="gfp-monto" type="number" placeholder="0"/></div>
+    <div class="form-group"><label class="form-label">Estado</label><select class="form-select" id="gfp-estado"><option value="pagado">Pagado</option><option value="pendiente">Pendiente</option></select></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-gfp')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarGFP()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPUESTOS CONFIG -->
+<div class="overlay" id="modal-imp-config">
+  <div class="modal">
+    <div class="modal-title">Configurar Impuestos</div>
+    <div class="modal-subtitle">Estos datos se usan para calcular y alertarte</div>
+    <div class="form-group"><label class="form-label">Categoría Monotributo actual</label>
+      <select class="form-select" id="imp-cat">
+        <option value="A">A — hasta $ 748.000/año</option>
+        <option value="B">B — hasta $ 1.122.000/año</option>
+        <option value="C">C — hasta $ 1.576.500/año</option>
+        <option value="D">D — hasta $ 2.206.500/año</option>
+        <option value="E">E — hasta $ 2.953.500/año</option>
+        <option value="F">F — hasta $ 3.922.500/año</option>
+        <option value="G">G — hasta $ 4.891.500/año</option>
+        <option value="H">H — hasta $ 5.860.500/año</option>
+        <option value="I" selected>I — hasta $ 7.330.500/año</option>
+        <option value="J">J — hasta $ 8.800.500/año</option>
+        <option value="K">K — hasta $ 10.270.500/año</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Cuota mensual Monotributo (ARS)</label><input class="form-input" id="imp-mono-monto" type="number" placeholder="0"/></div>
+      <div class="form-group"><label class="form-label">% Ingresos Brutos</label><input class="form-input" id="imp-iibb-pct" type="number" placeholder="Ej: 3.5" step="0.1"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">¿Pagás IIBB?</label><select class="form-select" id="imp-iibb-activo"><option value="si">Sí</option><option value="no">No</option></select></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-imp-config')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarImpConfig()">Guardar configuración</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGO IMPUESTO MES -->
+<div class="overlay" id="modal-imp-pago">
+  <div class="modal">
+    <div class="modal-title" id="mimp-title">Registrar pago de impuesto</div>
+    <input type="hidden" id="impp-tipo">
+    <div class="form-group"><label class="form-label">Monto pagado (ARS)</label><input class="form-input" id="impp-monto" type="number" placeholder="0"/></div>
+    <div class="form-group"><label class="form-label">Fecha de pago</label><input class="form-input" id="impp-fecha" type="date"/></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-imp-pago')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarImpPago()">Confirmar pago</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROYECTO -->
+<div class="overlay" id="modal-proy">
+  <div class="modal">
+    <div class="modal-title">Nuevo Proyecto</div>
+    <div class="form-group"><label class="form-label">Cliente</label><input class="form-input" id="p-cliente" placeholder="Nombre del cliente"/></div>
+    <div class="form-group"><label class="form-label">Descripción del trabajo</label><input class="form-input" id="p-desc" placeholder="Ej: Spot publicitario + diseño"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Monto total (ARS)</label><input class="form-input" id="p-monto" type="number" placeholder="0"/></div>
+      <div class="form-group"><label class="form-label">Fecha</label><input class="form-input" id="p-fecha" type="date"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Estado de cobro</label>
+      <select class="form-select" id="p-estado" onchange="document.getElementById('p-pg').style.display=this.value==='parcial'?'block':'none'">
+        <option value="pendiente">Pendiente</option><option value="cobrado">Cobrado</option><option value="parcial">Cobrado parcialmente</option>
+      </select>
+    </div>
+    <div id="p-pg" class="form-group" style="display:none"><label class="form-label">Monto cobrado hasta ahora</label><input class="form-input" id="p-cobrado" type="number" placeholder="0"/></div>
+    <div class="form-group"><label class="form-label">Notas</label><input class="form-input" id="p-notas" placeholder="Cuotas, condiciones, etc."/></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-proy')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarProy()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- EGRESO -->
+<div class="overlay" id="modal-eg">
+  <div class="modal">
+    <div class="modal-title">Nuevo Egreso</div>
+    <div class="form-group"><label class="form-label">Descripción</label><input class="form-input" id="eg-desc" placeholder="Ej: Compra equipamiento"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Monto (ARS)</label><input class="form-input" id="eg-monto" type="number" placeholder="0"/></div>
+      <div class="form-group"><label class="form-label">Categoría</label><select class="form-select" id="eg-cat"><option>Equipamiento</option><option>Viáticos</option><option>Materiales</option><option>Marketing</option><option>Otro</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Fecha</label><input class="form-input" id="eg-fecha" type="date"/></div>
+      <div class="form-group"><label class="form-label">Destinatario</label><input class="form-input" id="eg-dest" placeholder="A quién"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-eg')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEg()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEUDA -->
+<div class="overlay" id="modal-deu">
+  <div class="modal">
+    <div class="modal-title">Deuda por cobrar</div>
+    <div class="form-group"><label class="form-label">¿Quién debe?</label><input class="form-input" id="deu-quien" placeholder="Nombre del cliente"/></div>
+    <div class="form-group"><label class="form-label">¿Por qué concepto?</label><input class="form-input" id="deu-conc" placeholder="Ej: Redes sociales nov y dic"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Monto total (ARS)</label><input class="form-input" id="deu-total" type="number" placeholder="0"/></div>
+      <div class="form-group"><label class="form-label">Ya cobrado (ARS)</label><input class="form-input" id="deu-pago" type="number" placeholder="0" value="0"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Contacto</label><input class="form-input" id="deu-cont" placeholder="Tel / email"/></div>
+      <div class="form-group"><label class="form-label">Prioridad</label><select class="form-select" id="deu-prio"><option value="alta">🔴 Alta</option><option value="media" selected>🟡 Media</option><option value="baja">🟢 Baja</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Estado de gestión</label><select class="form-select" id="deu-gest"><option value="sin_contactar">Sin contactar</option><option value="contactado">Contactado</option><option value="en_acuerdo">En acuerdo de pago</option></select></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-deu')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarDeu()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// CONSTANTES
+// ══════════════════════════════════════
+const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MC=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+
+let mes=new Date().getMonth(), anio=new Date().getFullYear();
+
+// Límites anuales por categoría monotributo (ARS) - valores orientativos
+const MONO_LIMITES={A:748000,B:1122000,C:1576500,D:2206500,E:2953500,F:3922500,G:4891500,H:5860500,I:7330500,J:8800500,K:10270500};
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let S={
+  clientes:[], pagos:{},
+  proyectos:[],
+  colaboradores:[], horasReg:{},
+  gastosFijos:[], gfPagos:{},
+  egresos:[],
+  deudas:[],
+  impConfig:{ cat:'I', monoMonto:0, iibbPct:3.5, iibbActivo:'si' },
+  impPagos:{}, // impPagos[mesKey][tipo] = {monto, fecha}
+};
+
+const FIJOS_INIT=[
+  {id:1,nombre:'Heladería del Parque',monto:800000,resp:'Franco Contreras',serv:'Comunicación integral + diseño franquicias',cont:'no',medio:'Efectivo',historial:[]},
+  {id:2,nombre:'Parque Parador',monto:600000,resp:'Andrés Rotman',serv:'Gestión redes + 1 visita/mes',cont:'no',medio:'Mixto',historial:[]},
+  {id:3,nombre:'La Casa del Vino',monto:750000,resp:'Guillermo Romero',serv:'Gestión redes + diseño (variable)',cont:'no',medio:'Efectivo',historial:[]},
+  {id:4,nombre:'Surya Vinos',monto:350000,resp:'Manuel Ruiz',serv:'Gestión redes + diseño + coberturas',cont:'no',medio:'Efectivo',historial:[]},
+  {id:5,nombre:'Gobierno / Min. Producción',monto:1080969,resp:'—',serv:'Comunicación institucional',cont:'no',medio:'Transferencia',historial:[]},
+  {id:6,nombre:'PUMA (Marsan SRL)',monto:850000,resp:'Miguel Caruso',serv:'Comunicación completa + redes + contenido',cont:'no',medio:'Transferencia',historial:[]},
+  {id:7,nombre:'Manzanar',monto:820000,resp:'Gabriel',serv:'Gestión redes + contenido',cont:'no',medio:'Mixto',historial:[]},
+  {id:8,nombre:'Trielec',monto:1652000,resp:'Fernando Alonso',serv:'Comunicación completa + redes + contenido',cont:'si',medio:'Transferencia',historial:[]},
+  {id:9,nombre:'Galván',monto:510000,resp:'Cristóbal',serv:'3 videos + 4 gráficas/mes',cont:'no',medio:'Efectivo',historial:[]},
+  {id:10,nombre:'Mala Junta',monto:730000,resp:'Yamil Yafar',serv:'Gestión redes + contenido',cont:'si',medio:'Transferencia',historial:[]},
+  {id:11,nombre:'Delivery',monto:700000,resp:'Micaela Castillo',serv:'Gestión redes + contenido',cont:'si',medio:'Transferencia',historial:[]},
+  {id:12,nombre:'Constructora de Imagen',monto:400000,resp:'Ivana González',serv:'2 videos/mes',cont:'no',medio:'Transferencia',historial:[]},
+  {id:13,nombre:'Becher Logística',monto:1652000,resp:'Ana Laura Becher',serv:'Comunicación completa + redes + contenido',cont:'no',medio:'Transferencia',historial:[]},
+  {id:14,nombre:'0264 Noticias',monto:1000000,resp:'Julio Turcumán',serv:'Edición 80 clips/mes',cont:'no',medio:'Transferencia',historial:[]},
+];
+
+function load(){try{const s=localStorage.getItem('jillo_v4');if(s)S=JSON.parse(s);}catch(e){}}
+function save(){localStorage.setItem('jillo_v4',JSON.stringify(S));}
+function initData(){if(S.clientes.length===0){S.clientes=FIJOS_INIT.map(c=>({...c}));save();}}
+
+// ══════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════
+function mk(m,a){return`${a}-${String(m+1).padStart(2,'0')}`;}
+function mka(){return mk(mes,anio);}
+function fmt(n){return'$ '+Number(n||0).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0});}
+function fmtD(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${parseInt(day)} ${MC[parseInt(m)-1]} ${y}`;}
+function isFuture(m,a){return a>anio||(a===anio&&m>mes);}
+
+function getMonto(c){
+  if(c.historial&&c.historial.length>0){
+    const key=mka();
+    const h=[...c.historial].sort((a,b)=>b.desde.localeCompare(a.desde)).find(h=>h.desde<=key);
+    if(h)return h.monto;
+  }
+  return c.monto;
+}
+
+function toast(msg,tipo='ok'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=tipo==='error'?'#c0392b':tipo==='warn'?'#8a6800':'#1a1a18';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ══════════════════════════════════════
+// NAVEGACIÓN
+// ══════════════════════════════════════
+function goTo(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const map={dashboard:0,cierre:1,grilla:2,fijos:3,proyectos:4,colaboradores:5,gastosfijos:6,impuestos:7,egresos:8,deudas:9};
+  document.querySelectorAll('.nav-item')[map[p]].classList.add('active');
+  renderAll();
+}
+
+function cambiarMes(d){
+  mes+=d; if(mes>11){mes=0;anio++;} if(mes<0){mes=11;anio--;}
+  renderAll();
+}
+
+// ══════════════════════════════════════
+// MODALES
+// ══════════════════════════════════════
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  document.querySelectorAll(`#${id} input[type="date"]`).forEach(i=>{if(!i.value)i.value=new Date().toISOString().split('T')[0];});
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+function abrirEditarCF(id){
+  const c=S.clientes.find(x=>x.id===id);if(!c)return;
+  document.getElementById('mcf-title').textContent='Editar Cliente Fijo';
+  document.getElementById('cf-eid').value=id;
+  document.getElementById('cf-nombre').value=c.nombre;
+  document.getElementById('cf-monto').value=getMonto(c);
+  document.getElementById('cf-resp').value=c.resp||'';
+  document.getElementById('cf-serv').value=c.serv||'';
+  document.getElementById('cf-cont').value=c.cont||'no';
+  document.getElementById('cf-medio').value=c.medio||'Transferencia';
+  document.getElementById('cf-nota-g').style.display='block';
+  openModal('modal-cf');
+}
+
+function abrirPago(cid){
+  const c=S.clientes.find(x=>x.id===cid);if(!c)return;
+  document.getElementById('mpago-title').textContent=`Registrar pago`;
+  document.getElementById('mpago-sub').textContent=`${c.nombre} — ${MESES[mes]} ${anio}`;
+  document.getElementById('pago-cid').value=cid;
+  document.getElementById('pago-monto').value=getMonto(c);
+  document.getElementById('pago-notas').value='';
+  openModal('modal-pago');
+}
+
+function abrirHoras(cid){
+  const c=S.colaboradores.find(x=>x.id===cid);if(!c)return;
+  document.getElementById('mhoras-title').textContent=`Horas de ${c.nombre} — ${MESES[mes]} ${anio}`;
+  document.getElementById('horas-cid').value=cid;
+  const r=S.horasReg[cid]?.[mka()];
+  document.getElementById('horas-cant').value=r?r.horas:'';
+  document.getElementById('horas-estado').value=r?r.estado:'pendiente';
+  document.getElementById('horas-notas').value=r?r.notas||'':'';
+  openModal('modal-horas');
+}
+
+function abrirGFP(gfid){
+  const g=S.gastosFijos.find(x=>x.id===gfid);if(!g)return;
+  document.getElementById('mgfp-title').textContent=`Pago — ${g.nombre}`;
+  document.getElementById('gfp-id').value=gfid;
+  const r=S.gfPagos[gfid]?.[mka()];
+  document.getElementById('gfp-monto').value=r?r.monto:g.monto;
+  document.getElementById('gfp-estado').value=r?r.estado:'pagado';
+  openModal('modal-gfp');
+}
+
+function abrirImpPago(tipo){
+  const nombres={mono:'Monotributo (AFIP)',iibb:'Ingresos Brutos'};
+  document.getElementById('mimp-title').textContent=`Registrar pago — ${nombres[tipo]}`;
+  document.getElementById('impp-tipo').value=tipo;
+  const r=S.impPagos[mka()]?.[tipo];
+  if(tipo==='mono') document.getElementById('impp-monto').value=r?r.monto:S.impConfig.monoMonto;
+  else {
+    const ingCobrados=calcIngresosDelMes(mka());
+    document.getElementById('impp-monto').value=r?r.monto:Math.round(ingCobrados*(S.impConfig.iibbPct/100));
+  }
+  document.getElementById('impp-fecha').value=new Date().toISOString().split('T')[0];
+  openModal('modal-imp-pago');
+}
+
+// ══════════════════════════════════════
+// CÁLCULOS
+// ══════════════════════════════════════
+function calcIngresosDelMes(key){
+  let total=0;
+  S.clientes.forEach(c=>{const p=S.pagos[c.id]?.[key];if(p)total+=p.monto;});
+  S.proyectos.forEach(p=>{if(p.fecha&&p.fecha.startsWith(key))total+=p.cobrado||0;});
+  return total;
+}
+
+function calcEgresosDelMes(key){
+  let sueldos=0, gf=0, imp=0, otros=0;
+  S.colaboradores.forEach(c=>{const r=S.horasReg[c.id]?.[key];if(r)sueldos+=r.horas*c.tarifa;});
+  S.gastosFijos.forEach(g=>{const r=S.gfPagos[g.id]?.[key];gf+=r?r.monto:g.monto;});
+  const ip=S.impPagos[key]||{};
+  if(ip.mono)imp+=ip.mono.monto;
+  if(ip.iibb)imp+=ip.iibb.monto;
+  S.egresos.forEach(e=>{if(e.mes===key)otros+=e.monto;});
+  return{sueldos,gf,imp,otros,total:sueldos+gf+imp+otros};
+}
+
+function calcFacAnual(){
+  let total=0;
+  for(let m=0;m<12;m++){
+    const key=mk(m,anio);
+    S.clientes.forEach(c=>{const p=S.pagos[c.id]?.[key];if(p)total+=p.monto;});
+    S.proyectos.forEach(p=>{if(p.fecha&&p.fecha.startsWith(key))total+=p.cobrado||0;});
+  }
+  return total;
+}
+
+// ══════════════════════════════════════
+// GUARDAR
+// ══════════════════════════════════════
+function guardarCF(){
+  const eid=document.getElementById('cf-eid').value;
+  const n=document.getElementById('cf-nombre').value.trim();
+  const m=parseFloat(document.getElementById('cf-monto').value);
+  if(!n||!m){toast('Completá nombre y monto','error');return;}
+  if(eid){
+    const c=S.clientes.find(x=>x.id==eid);
+    if(c){
+      c.nombre=n;c.resp=document.getElementById('cf-resp').value;
+      c.serv=document.getElementById('cf-serv').value;c.cont=document.getElementById('cf-cont').value;
+      c.medio=document.getElementById('cf-medio').value;
+      if(m!==getMonto(c)){
+        if(!c.historial)c.historial=[];
+        c.historial.push({monto:m,desde:mka(),nota:document.getElementById('cf-nota').value||''});
+        c.monto=m;
+      }
+    }
+    toast('✓ Cliente actualizado');
+  } else {
+    S.clientes.push({id:Date.now(),nombre:n,monto:m,resp:document.getElementById('cf-resp').value,serv:document.getElementById('cf-serv').value,cont:document.getElementById('cf-cont').value,medio:document.getElementById('cf-medio').value,historial:[]});
+    toast('✓ Cliente agregado');
+  }
+  save(); closeModal('modal-cf');
+  document.getElementById('cf-eid').value='';
+  document.getElementById('mcf-title').textContent='Agregar Cliente Fijo';
+  document.getElementById('cf-nota-g').style.display='none';
+  ['cf-nombre','cf-monto','cf-resp','cf-serv','cf-nota'].forEach(i=>document.getElementById(i).value='');
+  renderAll();
+}
+
+function confirmarPago(){
+  const cid=parseInt(document.getElementById('pago-cid').value);
+  const m=parseFloat(document.getElementById('pago-monto').value);
+  if(!m){toast('Ingresá el monto','error');return;}
+  if(!S.pagos[cid])S.pagos[cid]={};
+  S.pagos[cid][mka()]={monto:m,medio:document.getElementById('pago-medio').value,factura:document.getElementById('pago-fact').value,notas:document.getElementById('pago-notas').value,fecha:new Date().toISOString().split('T')[0]};
+  save();closeModal('modal-pago');renderAll();toast('✓ Pago registrado');
+}
+
+function desmarcarPago(cid){
+  if(!confirm('¿Desmarcar este pago?'))return;
+  if(S.pagos[cid])delete S.pagos[cid][mka()];
+  save();renderAll();toast('Pago desmarcado','warn');
+}
+
+function guardarColab(){
+  const n=document.getElementById('col-nombre').value.trim();
+  const t=parseFloat(document.getElementById('col-tarifa').value);
+  if(!n||!t){toast('Completá nombre y tarifa','error');return;}
+  S.colaboradores.push({id:Date.now(),nombre:n,rol:document.getElementById('col-rol').value,tarifa:t});
+  save();closeModal('modal-colab');
+  ['col-nombre','col-rol','col-tarifa'].forEach(i=>document.getElementById(i).value='');
+  renderAll();toast('✓ Colaborador agregado');
+}
+
+function guardarHoras(){
+  const cid=parseInt(document.getElementById('horas-cid').value);
+  const h=parseFloat(document.getElementById('horas-cant').value);
+  if(isNaN(h)){toast('Ingresá las horas','error');return;}
+  if(!S.horasReg[cid])S.horasReg[cid]={};
+  S.horasReg[cid][mka()]={horas:h,estado:document.getElementById('horas-estado').value,notas:document.getElementById('horas-notas').value};
+  save();closeModal('modal-horas');renderAll();toast('✓ Horas guardadas');
+}
+
+function guardarGF(){
+  const n=document.getElementById('gf-nombre').value.trim();
+  const m=parseFloat(document.getElementById('gf-monto').value);
+  if(!n||!m){toast('Completá concepto y monto','error');return;}
+  S.gastosFijos.push({id:Date.now(),nombre:n,monto:m,cat:document.getElementById('gf-cat').value});
+  save();closeModal('modal-gf');
+  ['gf-nombre','gf-monto'].forEach(i=>document.getElementById(i).value='');
+  renderAll();toast('✓ Gasto fijo agregado');
+}
+
+function confirmarGFP(){
+  const gfid=parseInt(document.getElementById('gfp-id').value);
+  const m=parseFloat(document.getElementById('gfp-monto').value);
+  if(!m){toast('Ingresá el monto','error');return;}
+  if(!S.gfPagos[gfid])S.gfPagos[gfid]={};
+  S.gfPagos[gfid][mka()]={monto:m,estado:document.getElementById('gfp-estado').value};
+  save();closeModal('modal-gfp');renderAll();toast('✓ Guardado');
+}
+
+function guardarImpConfig(){
+  S.impConfig={
+    cat:document.getElementById('imp-cat').value,
+    monoMonto:parseFloat(document.getElementById('imp-mono-monto').value)||0,
+    iibbPct:parseFloat(document.getElementById('imp-iibb-pct').value)||0,
+    iibbActivo:document.getElementById('imp-iibb-activo').value
+  };
+  save();closeModal('modal-imp-config');renderAll();toast('✓ Configuración guardada');
+}
+
+function confirmarImpPago(){
+  const tipo=document.getElementById('impp-tipo').value;
+  const m=parseFloat(document.getElementById('impp-monto').value);
+  if(!m){toast('Ingresá el monto','error');return;}
+  if(!S.impPagos[mka()])S.impPagos[mka()]={};
+  S.impPagos[mka()][tipo]={monto:m,fecha:document.getElementById('impp-fecha').value};
+  save();closeModal('modal-imp-pago');renderAll();toast('✓ Pago registrado');
+}
+
+function guardarProy(){
+  const c=document.getElementById('p-cliente').value.trim();
+  const m=parseFloat(document.getElementById('p-monto').value);
+  if(!c||!m){toast('Completá cliente y monto','error');return;}
+  const est=document.getElementById('p-estado').value;
+  const cob=est==='cobrado'?m:(est==='parcial'?parseFloat(document.getElementById('p-cobrado').value)||0:0);
+  S.proyectos.push({id:Date.now(),cliente:c,desc:document.getElementById('p-desc').value,monto:m,cobrado:cob,estado:est,fecha:document.getElementById('p-fecha').value,notas:document.getElementById('p-notas').value});
+  save();closeModal('modal-proy');
+  ['p-cliente','p-desc','p-monto','p-cobrado','p-notas'].forEach(i=>document.getElementById(i).value='');
+  renderAll();toast('✓ Proyecto guardado');
+}
+
+function guardarEg(){
+  const d=document.getElementById('eg-desc').value.trim();
+  const m=parseFloat(document.getElementById('eg-monto').value);
+  if(!d||!m){toast('Completá descripción y monto','error');return;}
+  S.egresos.push({id:Date.now(),desc:d,monto:m,cat:document.getElementById('eg-cat').value,fecha:document.getElementById('eg-fecha').value,dest:document.getElementById('eg-dest').value,mes:mka()});
+  save();closeModal('modal-eg');
+  ['eg-desc','eg-monto','eg-dest'].forEach(i=>document.getElementById(i).value='');
+  renderAll();toast('✓ Egreso guardado');
+}
+
+function guardarDeu(){
+  const q=document.getElementById('deu-quien').value.trim();
+  const t=parseFloat(document.getElementById('deu-total').value);
+  if(!q||!t){toast('Completá quién debe y el monto','error');return;}
+  S.deudas.push({id:Date.now(),quien:q,conc:document.getElementById('deu-conc').value,total:t,pagado:parseFloat(document.getElementById('deu-pago').value)||0,cont:document.getElementById('deu-cont').value,prio:document.getElementById('deu-prio').value,gest:document.getElementById('deu-gest').value});
+  save();closeModal('modal-deu');
+  ['deu-quien','deu-conc','deu-total','deu-cont'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('deu-pago').value='0';
+  renderAll();toast('✓ Deuda registrada');
+}
+
+function elim(tipo,id){if(!confirm('¿Eliminar este registro?'))return;S[tipo]=S[tipo].filter(x=>x.id!==id);save();renderAll();toast('Eliminado','warn');}
+function elimCF(id){if(!confirm('¿Eliminar este cliente?'))return;S.clientes=S.clientes.filter(x=>x.id!==id);save();renderAll();toast('Eliminado','warn');}
+function elimColab(id){if(!confirm('¿Eliminar colaborador?'))return;S.colaboradores=S.colaboradores.filter(x=>x.id!==id);save();renderAll();toast('Eliminado','warn');}
+function elimGF(id){if(!confirm('¿Eliminar gasto fijo?'))return;S.gastosFijos=S.gastosFijos.filter(x=>x.id!==id);save();renderAll();toast('Eliminado','warn');}
+
+// ══════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════
+function renderAll(){
+  const ml=`${MESES[mes]} ${anio}`;
+  ['sb-mes','dash-mes','cierre-mes','fijos-mes','colab-mes','gf-mes','gf-mes2','imp-mes'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=ml;});
+  renderDash();renderCierre();renderGrilla();renderFijos();renderProyectos();renderColab();renderGF();renderImpuestos();renderEgresos();renderDeudas();
+}
+
+function renderDash(){
+  let cob=0,pot=0,nCob=0;
+  S.clientes.forEach(c=>{const m=getMonto(c);pot+=m;const p=S.pagos[c.id]?.[mka()];if(p){cob+=p.monto;nCob++;}});
+  const eg=calcEgresosDelMes(mka());
+  const gan=cob-eg.total;
+
+  document.getElementById('d-cob').textContent=fmt(cob);
+  document.getElementById('d-cob-s').textContent=`${nCob} de ${S.clientes.length} clientes pagaron`;
+  document.getElementById('d-pot').textContent=fmt(pot);
+  document.getElementById('d-eg').textContent=fmt(eg.total);
+  document.getElementById('d-gan').textContent=fmt(gan);
+  document.getElementById('d-gan').style.color=gan>=0?'var(--green)':'var(--red)';
+  document.getElementById('d-gan-s').textContent=gan>=0?'✅ Mes positivo':'⚠ Mes negativo';
+
+  // Alertas
+  const alertas=[];
+  const facAnual=calcFacAnual();
+  const limite=MONO_LIMITES[S.impConfig.cat]||7330500;
+  const pct=facAnual/limite*100;
+  if(pct>=90)alertas.push({tipo:'danger',titulo:'⚠ Límite de monotributo crítico',txt:`Facturaste ${fmt(facAnual)} de ${fmt(limite)} anuales (${pct.toFixed(0)}%). Hablá con tu contador sobre recategorización.`});
+  else if(pct>=75)alertas.push({tipo:'warning',titulo:'📊 Acercándote al límite de categoría',txt:`Facturaste ${fmt(facAnual)} de ${fmt(limite)} anuales (${pct.toFixed(0)}%). Prestá atención.`});
+  S.clientes.forEach(c=>{
+    let mesesDebe=0;
+    for(let i=1;i<=3;i++){let m2=mes-i,a2=anio;if(m2<0){m2+=12;a2--;}if(!S.pagos[c.id]?.[mk(m2,a2)])mesesDebe++;}
+    if(mesesDebe>=3)alertas.push({tipo:'danger',titulo:`⏳ ${c.nombre} debe 3+ meses`,txt:`Revisá la deuda pendiente de este cliente.`});
+  });
+  const egResumen=calcEgresosDelMes(mka());
+  if(cob>0&&egResumen.total>cob)alertas.push({tipo:'warning',titulo:'📉 Los egresos superan los ingresos cobrados',txt:`Egresos: ${fmt(egResumen.total)} vs Cobrado: ${fmt(cob)}.`});
+
+  document.getElementById('dash-alertas').innerHTML=alertas.slice(0,3).map(a=>`<div class="alert ${a.tipo}"><div class="alert-icon">${a.tipo==='danger'?'🔴':'🟡'}</div><div class="alert-text"><div class="alert-title">${a.titulo}</div>${a.txt}</div></div>`).join('');
+
+  // Cobros
+  if(S.clientes.length===0){document.getElementById('dash-cobros').innerHTML='<div class="empty"><div class="empty-emoji">💼</div><div class="empty-txt">Sin clientes fijos cargados</div></div>';return;}
+  const pend=pot-cob;
+  document.getElementById('d-cobros-meta').textContent=`Falta cobrar: ${fmt(pend)}`;
+  let html='<table><thead><tr><th>Cliente</th><th>Honorario</th><th>Estado</th></tr></thead><tbody>';
+  S.clientes.forEach(c=>{const p=S.pagos[c.id]?.[mka()];const m=getMonto(c);html+=`<tr><td>${c.nombre}</td><td class="td-mono">${fmt(m)}</td><td>${p?`<span class="badge badge-green">✓ Cobrado</span>`:`<span class="badge badge-red">Pendiente</span>`}</td></tr>`;});
+  html+='</tbody></table>';
+  document.getElementById('dash-cobros').innerHTML=html;
+
+  // Desglose egresos
+  const items=[['👥 Sueldos equipo',eg.sueldos],['🏷 Gastos fijos',eg.gf],['🏛 Impuestos',eg.imp],['💸 Otros',eg.otros]];
+  document.getElementById('dash-egresos-detalle').innerHTML=items.map(([label,val])=>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px;color:var(--text2)">${label}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:${val>0?'var(--red)':'var(--text3)'}">${val>0?fmt(val):'—'}</span>
+    </div>`
+  ).join('')+`<div style="display:flex;justify-content:space-between;padding:10px 0 0"><span style="font-weight:700">Total egresos</span><span style="font-family:'DM Mono',monospace;font-weight:700;color:var(--red)">${fmt(eg.total)}</span></div>`;
+}
+
+function renderCierre(){
+  const ing=calcIngresosDelMes(mka());
+  const eg=calcEgresosDelMes(mka());
+  const neta=ing-eg.total;
+  const margen=ing>0?((neta/ing)*100).toFixed(1):0;
+
+  document.getElementById('c-ingresos').textContent=fmt(ing);
+  document.getElementById('c-sueldos').textContent=fmt(eg.sueldos);
+  document.getElementById('c-gf').textContent=fmt(eg.gf);
+  document.getElementById('c-imp').textContent=fmt(eg.imp);
+  document.getElementById('c-otros').textContent=fmt(eg.otros);
+  document.getElementById('c-neta').textContent=fmt(neta);
+  document.getElementById('c-neta').style.color=neta>=0?'var(--green)':'var(--red)';
+
+  document.getElementById('c-margen-area').innerHTML=`
+    <div style="margin-bottom:12px">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:4px">Margen neto del mes</div>
+      <div style="font-size:32px;font-weight:800;color:${neta>=0?'var(--green)':'var(--red)'};letter-spacing:-1px">${margen}%</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px">${neta>=0?'Por cada $100 que entraron, quedan $'+Math.round(margen):'Mes con pérdida'}</div>
+    </div>
+    <div class="prog"><div class="prog-fill" style="width:${Math.min(100,Math.max(0,margen))}%;background:${neta>=0?'var(--green)':'var(--red)'}"></div></div>
+  `;
+
+  // Historial
+  const hist=[];
+  for(let i=5;i>=0;i--){
+    let m2=mes-i,a2=anio;
+    if(m2<0){m2+=12;a2--;}
+    const key=mk(m2,a2);
+    const ing2=calcIngresosDelMes(key);
+    const eg2=calcEgresosDelMes(key);
+    const net2=ing2-eg2.total;
+    if(ing2>0||eg2.total>0)hist.push({label:`${MC[m2]} ${a2}`,ing:ing2,net:net2});
+  }
+  if(hist.length===0){document.getElementById('historial-cierres').innerHTML='<div class="empty"><div class="empty-emoji">📆</div><div class="empty-txt">Cargá datos para ver el historial</div></div>';return;}
+  document.getElementById('historial-cierres').innerHTML=hist.map(h=>`
+    <div class="hist-item">
+      <div><div style="font-size:13px;font-weight:600">${h.label}</div><div style="font-size:11px;color:var(--text3)">Ingresos: ${fmt(h.ing)}</div></div>
+      <div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-weight:700;color:${h.net>=0?'var(--green)':'var(--red)'};font-size:13px">${fmt(h.net)}</div><div style="font-size:10px;color:var(--text3)">${h.net>=0?'Ganancia':'Pérdida'}</div></div>
+    </div>`).join('');
+}
+
+function renderGrilla(){
+  const el=document.getElementById('grilla-contenido');
+  if(S.clientes.length===0){el.innerHTML='<div class="empty"><div class="empty-emoji">🗂</div><div class="empty-txt">Sin clientes fijos</div></div>';return;}
+  const cols=[];
+  for(let i=4;i>=0;i--){let m2=mes-i,a2=anio;if(m2<0){m2+=12;a2--;}cols.push({m:m2,a:a2,key:mk(m2,a2),label:`${MC[m2]} ${String(a2).slice(2)}`);}
+  let nm=mes+1,na=anio;if(nm>11){nm=0;na++;}
+  cols.push({m:nm,a:na,key:mk(nm,na),label:`${MC[nm]} ${String(na).slice(2)}`});
+
+  let totPend=0;
+  let html='<div class="grilla-wrap"><table class="grilla"><thead><tr><th class="col-cliente">Cliente</th><th style="min-width:120px">Honorario</th>';
+  cols.forEach(c=>{html+=`<th class="col-mes" style="${c.key===mka()?'color:var(--accent);background:var(--blue-bg)':''}">${c.label}</th>`;});
+  html+='<th>Meses debe</th><th>Total debe</th></tr></thead><tbody>';
+
+  S.clientes.forEach(c=>{
+    const monto=getMonto(c);
+    let mesesDebe=0,totalDebe=0;
+    html+=`<tr><td class="col-cliente"><strong>${c.nombre}</strong></td><td class="td-mono" style="color:var(--text2)">${fmt(monto)}</td>`;
+    cols.forEach(col=>{
+      if(isFuture(col.m,col.a)){html+=`<td class="col-mes"><span class="pago-btn futuro">—</span></td>`;}
+      else{
+        const p=S.pagos[c.id]?.[col.key];
+        if(p){html+=`<td class="col-mes"><span class="pago-btn pagado" title="${fmt(p.monto)}">✓</span></td>`;}
+        else{mesesDebe++;totalDebe+=monto;totPend+=monto;html+=`<td class="col-mes"><span class="pago-btn pendiente">✗</span></td>`;}
+      }
+    });
+    const color=mesesDebe>=3?'var(--red)':mesesDebe>0?'var(--orange)':'var(--green)';
+    html+=`<td style="font-weight:700;color:${color};font-family:'DM Mono',monospace;font-size:12px">${mesesDebe>0?mesesDebe+' mes'+(mesesDebe>1?'es':''):'✓ Al día'}</td>`;
+    html+=`<td style="font-family:'DM Mono',monospace;font-size:12px;color:${mesesDebe>0?'var(--orange)':'var(--text3)'}">${mesesDebe>0?fmt(totalDebe):'—'}</td></tr>`;
+  });
+  html+='</tbody></table></div>';
+  el.innerHTML=html;
+  document.getElementById('grilla-total').textContent=`Total pendiente: ${fmt(totPend)}`;
+}
+
+function renderFijos(){
+  const el=document.getElementById('tabla-fijos');
+  if(S.clientes.length===0){el.innerHTML='<div class="empty"><div class="empty-emoji">🔄</div><div class="empty-txt">Sin clientes fijos</div></div>';['r-cob','r-pend','r-tot'].forEach(i=>document.getElementById(i).textContent='$ 0');return;}
+  let cob=0,pend=0,tot=0;
+  S.clientes.forEach(c=>{const m=getMonto(c);tot+=m;const p=S.pagos[c.id]?.[mka()];if(p)cob+=p.monto;else pend+=m;});
+  document.getElementById('r-cob').textContent=fmt(cob);
+  document.getElementById('r-pend').textContent=fmt(pend);
+  document.getElementById('r-tot').textContent=fmt(tot);
+
+  let html=`<table><thead><tr><th>Cliente</th><th>Honorario</th><th>Servicio</th><th>Responsable</th><th>Contrato</th><th>Estado ${MC[mes]}</th><th></th></tr></thead><tbody>`;
+  S.clientes.forEach(c=>{
+    const p=S.pagos[c.id]?.[mka()];
+    const m=getMonto(c);
+    const btn=p
+      ?`<button class="pago-btn pagado" onclick="desmarcarPago(${c.id})" title="${fmt(p.monto)} · ${p.medio}${p.factura==='si'?' · Con factura':''}">✓ Cobrado</button>`
+      :`<button class="pago-btn pendiente" onclick="abrirPago(${c.id})">Marcar cobrado</button>`;
+    html+=`<tr>
+      <td><strong>${c.nombre}</strong><br><span class="td-muted">${c.medio}</span></td>
+      <td class="td-mono">${fmt(m)}</td>
+      <td><span class="td-muted" style="max-width:150px;display:block">${c.serv||'—'}</span></td>
+      <td class="td-muted">${c.resp||'—'}</td>
+      <td>${c.cont==='si'?'<span class="badge badge-green">Con contrato</span>':'<span class="badge badge-gray">Sin contrato</span>'}</td>
+      <td>${btn}</td>
+      <td style="display:flex;gap:4px">
+        <button class="btn-edit-soft" onclick="abrirEditarCF(${c.id})">✎ Editar</button>
+        <button class="btn-danger-soft" onclick="elimCF(${c.id})">✕</button>
+      </td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  el.innerHTML=html;
+}
+
+function renderProyectos(){
+  const el=document.getElementById('tabla-proyectos');
+  if(S.proyectos.length===0){el.innerHTML='<div class="empty"><div class="empty-emoji">⭐</div><div class="empty-txt">No hay proyectos en curso<br>Cuando llegue uno, lo cargás acá</div></div>';return;}
+  const em={cobrado:'badge-green',pendiente:'badge-red',parcial:'badge-orange'};
+  const et={cobrado:'Cobrado',pendiente:'Pendiente',parcial:'Cobrado parcialmente'};
+  let html=`<table><thead><tr><th>Cliente</th><th>Trabajo</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Notas</th><th></th></tr></thead><tbody>`;
+  [...S.proyectos].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).forEach(p=>{
+    html+=`<tr>
+      <td><strong>${p.cliente}</strong></td>
+      <td class="td-muted">${p.desc||'—'}</td>
+      <td class="td-mono td-muted">${fmtD(p.fecha)}</td>
+      <td class="td-mono">${fmt(p.monto)}</td>
+      <td><span class="badge ${em[p.estado]}">${et[p.estado]}</span>${p.estado==='parcial'?`<br><span style="font-size:10px;color:var(--orange)">Resta: ${fmt(p.monto-p.cobrado)}</span>`:''}</td>
+      <td class="td-muted">${p.notas||'—'}</td>
+      <td><button class="btn-danger-soft" onclick="elim('proyectos',${p.id})">✕</button></td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  el.innerHTML=html;
+}
+
+function renderColab(){
+  const el=document.getElementById('tabla-colab');
+  if(S.colaboradores.length===0){el.innerHTML='<div class="empty"><div class="empty-emoji">👥</div><div class="empty-txt">Sin colaboradores cargados<br>Agregá a tu equipo con el botón de arriba</div></div>';['rc-tot','rc-pag','rc-pen'].forEach(i=>document.getElementById(i).textContent='$ 0');return;}
+  let totT=0,totP=0,totPen=0;
+  let html=`<table><thead><tr><th>Nombre</th><th>Rol</th><th>Valor hora</th><th>Horas ${MC[mes]}</th><th>A cobrar</th><th>Estado</th><th></th></tr></thead><tbody>`;
+  S.colaboradores.forEach(c=>{
+    const r=S.horasReg[c.id]?.[mka()];
+    const h=r?r.horas:0, tot=h*c.tarifa;
+    totT+=tot;
+    if(r&&r.estado==='pagado')totP+=tot;else if(tot>0)totPen+=tot;
+    const badge=!r?'<span class="badge badge-gray">Sin cargar</span>':r.estado==='pagado'?'<span class="badge badge-green">✓ Pagado</span>':'<span class="badge badge-orange">Pendiente</span>';
+    html+=`<tr>
+      <td><strong>${c.nombre}</strong></td>
+      <td class="td-muted">${c.rol||'—'}</td>
+      <td class="td-mono" style="color:var(--blue)">${fmt(c.tarifa)}/h</td>
+      <td class="td-mono">${h>0?h+' hs':'—'}</td>
+      <td class="td-mono" style="color:${tot>0?'var(--red)':'var(--text3)'}">${tot>0?fmt(tot):'—'}</td>
+      <td>${badge}</td>
+      <td style="display:flex;gap:4px">
+        <button class="btn-edit-soft" onclick="abrirHoras(${c.id})">+ Horas</button>
+        <button class="btn-danger-soft" onclick="elimColab(${c.id})">✕</button>
+      </td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  el.innerHTML=html;
+  document.getElementById('rc-tot').textContent=fmt(totT);
+  document.getElementById('rc-pag').textContent=fmt(totP);
+  document.getElementById('rc-pen').textContent=fmt(totPen);
+}
+
+function renderGF(){
+  const elL=document.getElementById('lista-gf'), elM=document.getElementById('tabla-gf-mes');
+  const totBase=S.gastosFijos.reduce((a,x)=>a+x.monto,0);
+  document.getElementById('gf-total-lbl').textContent=`Total base: ${fmt(totBase)}/mes`;
+  if(S.gastosFijos.length===0){
+    elL.innerHTML='<div class="empty"><div class="empty-emoji">🏷</div><div class="empty-txt">Sin gastos fijos<br>Agregá alquiler, software, etc.</div></div>';
+    elM.innerHTML='<div class="empty"><div class="empty-emoji">📋</div><div class="empty-txt">Sin gastos fijos</div></div>';
+    return;
+  }
+  elL.innerHTML=S.gastosFijos.map(g=>`<div class="gf-row"><div><div style="font-size:13px;font-weight:600">${g.nombre}</div><div class="td-muted" style="font-size:11px;margin-top:2px">${g.cat}</div></div><div style="display:flex;align-items:center;gap:8px"><span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--orange)">${fmt(g.monto)}/mes</span><button class="btn-danger-soft" onclick="elimGF(${g.id})">✕</button></div></div>`).join('');
+  let html=`<table><thead><tr><th>Concepto</th><th>Base</th><th>Estado ${MC[mes]}</th><th></th></tr></thead><tbody>`;
+  S.gastosFijos.forEach(g=>{
+    const r=S.gfPagos[g.id]?.[mka()];
+    html+=`<tr><td><strong>${g.nombre}</strong></td><td class="td-mono">${fmt(g.monto)}</td><td>${r&&r.estado==='pagado'?`<span class="badge badge-green">✓ Pagado ${fmt(r.monto)}</span>`:`<span class="badge badge-red">Pendiente</span>`}</td><td><button class="btn-edit-soft" onclick="abrirGFP(${g.id})">Registrar</button></td></tr>`;
+  });
+  html+='</tbody></table>';
+  elM.innerHTML=html;
+}
+
+function renderImpuestos(){
+  const cfg=S.impConfig;
+  const ip=S.impPagos[mka()]||{};
+  const ingMes=calcIngresosDelMes(mka());
+  const iibbCalc=Math.round(ingMes*(cfg.iibbPct/100));
+  const facAnual=calcFacAnual();
+  const limite=MONO_LIMITES[cfg.cat]||7330500;
+  const pct=facAnual/limite*100;
+
+  // Alerta recategorización
+  let alertaHTML='';
+  if(pct>=90)alertaHTML=`<div class="alert danger"><div class="alert-icon">🔴</div><div class="alert-text"><div class="alert-title">Límite crítico de facturación</div>Facturaste ${fmt(facAnual)} de ${fmt(limite)} (${pct.toFixed(0)}%). Necesitás recategorizarte urgente.</div></div>`;
+  else if(pct>=75)alertaHTML=`<div class="alert warning"><div class="alert-icon">🟡</div><div class="alert-text"><div class="alert-title">Acercándote al límite de categoría ${cfg.cat}</div>Facturaste ${fmt(facAnual)} de ${fmt(limite)} anuales (${pct.toFixed(0)}%). Empezá a planificarlo.</div></div>`;
+  document.getElementById('imp-alerta-recateg').innerHTML=alertaHTML;
+
+  // Lista impuestos
+  const impuestos=[
+    {tipo:'mono',nombre:'Monotributo (AFIP)',detalle:`Cuota fija · Categoría ${cfg.cat}`,monto:cfg.monoMonto,pagado:ip.mono},
+    ...(cfg.iibbActivo==='si'?[{tipo:'iibb',nombre:'Ingresos Brutos',detalle:`${cfg.iibbPct}% sobre ingresos cobrados (${fmt(ingMes)})`,monto:iibbCalc,pagado:ip.iibb}]:[])
+  ];
+
+  document.getElementById('lista-impuestos').innerHTML=impuestos.length===0?'<div class="empty"><div class="empty-emoji">🏛</div><div class="empty-txt">Configurá tus impuestos<br>con el botón ⚙ Configurar</div></div>':
+  impuestos.map(imp=>`<div class="imp-item">
+    <div><div class="imp-name">${imp.nombre}</div><div class="imp-detail">${imp.detalle}</div></div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="imp-monto">${fmt(imp.monto)}</div>
+      ${imp.pagado?`<span class="badge badge-green">✓ Pagado ${fmtD(imp.pagado.fecha)}</span>`:`<span class="badge badge-red">Pendiente</span>`}
+      <button class="btn-edit-soft" onclick="abrirImpPago('${imp.tipo}')">${imp.pagado?'Actualizar':'Marcar pagado'}</button>
+    </div>
+  </div>`).join('');
+
+  // Config view
+  document.getElementById('imp-config-view').innerHTML=`
+    <div style="display:grid;gap:12px">
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">Figura tributaria</span><strong>Monotributo</strong></div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">Categoría actual</span><strong>Categoría ${cfg.cat}</strong></div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">Cuota mensual AFIP</span><strong style="font-family:'DM Mono',monospace">${fmt(cfg.monoMonto)}</strong></div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">Ingresos Brutos</span><strong>${cfg.iibbActivo==='si'?cfg.iibbPct+'%':'No aplica'}</strong></div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">Facturado este año</span><strong style="font-family:'DM Mono',monospace;color:${pct>=75?'var(--orange)':'var(--text)'}">${fmt(facAnual)}</strong></div>
+      <div style="padding:10px 0">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Uso del límite anual</div>
+        <div class="prog"><div class="prog-fill" style="width:${Math.min(100,pct)}%;background:${pct>=90?'var(--red)':pct>=75?'var(--orange)':'var(--green)'}"></div></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">${pct.toFixed(1)}% utilizado — restan ${fmt(Math.max(0,limite-facAnual))}</div>
+      </div>
+    </div>`;
+}
+
+function renderEgresos(){
+  const el=document.getElementById('tabla-egresos');
+  if(S.egresos.length===0){el.innerHTML='<div class="empty"><div class="empty-emoji">💸</div><div class="empty-txt">Sin egresos variables registrados</div></div>';return;}
+  let html=`<table><thead><tr><th>Descripción</th><th>Categoría</th><th>Destinatario</th><th>Fecha</th><th>Monto</th><th></th></tr></thead><tbody>`;
+  [...S.egresos].sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).forEach(e=>{
+    html+=`<tr><td><strong>${e.desc}</strong></td><td><span class="badge badge-gray">${e.cat}</span></td><td class="td-muted">${e.dest||'—'}</td><td class="td-mono td-muted">${fmtD(e.fecha)}</td><td class="td-mono" style="color:var(--red)">− ${fmt(e.monto).replace('$ ','')}</td><td><button class="btn-danger-soft" onclick="elim('egresos',${e.id})">✕</button></td></tr>`;
+  });
+  html+='</tbody></table>';
+  el.innerHTML=html;
+}
+
+function renderDeudas(){
+  const el=document.getElementById('lista-deudas');
+  if(S.deudas.length===0){el.innerHTML='<div class="empty"><div class="empty-emoji">⏳</div><div class="empty-txt">Sin deudas registradas<br>¡Bien!</div></div>';return;}
+  const pc={alta:'badge-red',media:'badge-yellow',baja:'badge-gray'};
+  const gm={sin_contactar:'badge-gray',contactado:'badge-blue',en_acuerdo:'badge-green'};
+  const gt={sin_contactar:'Sin contactar',contactado:'Contactado',en_acuerdo:'En acuerdo'};
+  const po={alta:0,media:1,baja:2};
+  [...S.deudas].sort((a,b)=>po[a.prio]-po[b.prio]).forEach(d=>{
+    const pend=d.total-d.pagado, pct2=Math.min(100,(d.pagado/d.total)*100);
+    const div=document.createElement('div');
+    div.className='debt-item';
+    div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+      <div><div class="debt-name" style="font-size:14px">${d.quien}</div><div style="font-size:12px;color:var(--text3);margin-top:2px">${d.conc||'—'}${d.cont?' · '+d.cont:''}</div></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="badge ${gm[d.gest]}">${gt[d.gest]}</span>
+        <span class="badge ${pc[d.prio]}">${d.prio}</span>
+        <button class="btn-danger-soft" onclick="elim('deudas',${d.id})">✕</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:16px;align-items:center">
+      <span style="font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:var(--orange)">Debe: ${fmt(pend)}</span>
+      <span style="font-size:12px;color:var(--text3)">de ${fmt(d.total)} total</span>
+    </div>
+    <div class="prog" style="margin-top:10px"><div class="prog-fill" style="width:${pct2}%;background:var(--green)"></div></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:3px">${pct2.toFixed(0)}% cobrado</div>`;
+    el.appendChild(div);
+  });
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+function init(){
+  load(); initData();
+  // Precargar config impuestos en modal
+  document.getElementById('imp-cat').value=S.impConfig.cat;
+  document.getElementById('imp-mono-monto').value=S.impConfig.monoMonto||0;
+  document.getElementById('imp-iibb-pct').value=S.impConfig.iibbPct||3.5;
+  document.getElementById('imp-iibb-activo').value=S.impConfig.iibbActivo||'si';
+  renderAll();
+}
+
+// Fix render deudas para no duplicar
+const _renderDeudas=renderDeudas;
+renderDeudas=function(){document.getElementById('lista-deudas').innerHTML='';_renderDeudas();};
+
+init();
+</script>
+</body>
+</html>
