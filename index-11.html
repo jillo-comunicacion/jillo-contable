@@ -277,9 +277,8 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
 <!-- INGRESOS -->
 <div class="section" id="sec-ingresos">
   <div class="action-row">
-    <div><div class="action-title">Ingresos de <span id="ing-anio-lbl">—</span></div><div style="font-size:11px;color:var(--text3);margin-top:3px">Todos los cobros del año · Los cobros de la grilla se sincronizan automáticamente</div></div>
+    <div><div class="action-title">Todos los ingresos</div><div style="font-size:11px;color:var(--text3);margin-top:3px">Los cobros de la grilla se sincronizan automáticamente acá</div></div>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-g" id="btn-add-ing">+ Cobro de cliente fijo</button>
       <button class="btn btn-pu" id="btn-add-proy-ing">+ Ingreso de proyecto</button>
     </div>
   </div>
@@ -288,7 +287,12 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
       <div class="si"><div class="sv" id="ing-tot" style="color:var(--green)">$ 0</div><div class="sl">Total cobrado</div></div>
       <div class="si"><div class="sv" id="ing-fijos" style="color:var(--green)">$ 0</div><div class="sl">De clientes fijos</div></div>
       <div class="si"><div class="sv" id="ing-proyectos" style="color:var(--purple)">$ 0</div><div class="sl">De proyectos</div></div>
-      <div class="si"><div class="sv" id="ing-prc" style="color:var(--orange)">$ 0</div><div class="sl">Deuda pendiente</div></div>
+      <div class="si"><div class="sv" id="ing-prc" style="color:var(--orange)">$ 0</div><div class="sl">Deuda clientes fijos</div></div>
+    </div>
+    <div class="strip" style="grid-template-columns:repeat(3,1fr);background:var(--blue-bg)">
+      <div class="si"><div class="sv" id="ing-fact" style="color:var(--blue)">$ 0</div><div class="sl">Facturado</div></div>
+      <div class="si"><div class="sv" id="ing-nofact" style="color:var(--text3)">$ 0</div><div class="sl">Sin factura</div></div>
+      <div class="si"><div class="sv" id="ing-iva" style="color:var(--red)">$ 0</div><div class="sl">IVA a pagar (21%)</div></div>
     </div>
     <div id="lista-ing"></div>
   </div>
@@ -358,6 +362,13 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
   <div class="fg"><label class="fl">Monto <span id="gc-monto-lbl">(ARS)</span></label><input class="fi" type="number" id="gc-monto" placeholder="0"><div class="sug" id="gc-sug"></div></div>
   <div class="fg"><label class="fl">Detalle</label><input class="fi" id="gc-desc" placeholder="Ej: Pago completo, cuota 1/2..."></div>
   <div class="fg" id="gc-medio-g"><label class="fl">Medio de pago</label><select class="fs" id="gc-medio"><option>Transferencia</option><option>Efectivo</option><option>Mixto</option></select></div>
+  <div class="fg" id="gc-fact-g">
+    <label class="fl">¿Generaste factura?</label>
+    <div style="display:flex;gap:8px">
+      <button class="ebtn" id="ebtn-nofact" style="flex:1">Sin factura</button>
+      <button class="ebtn" id="ebtn-fact" style="flex:1">✓ Con factura (IVA 21%)</button>
+    </div>
+  </div>
   <div class="fg" id="gc-fecha-g"><label class="fl">Fecha del cobro</label><input class="fi" type="date" id="gc-fecha"></div>
   <div class="fg" id="gc-del-g" style="display:none"><button class="btn" style="background:var(--red-bg);color:var(--red);width:100%;justify-content:center" id="gc-del-btn">🗑 Eliminar este registro</button></div>
   <div class="ma"><button class="btn-cancel" id="mgc-cancel">Cancelar</button><button class="btn btn-g" id="mgc-save">Guardar</button></div>
@@ -391,6 +402,13 @@ body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans
   <div class="fr">
     <div class="fg"><label class="fl">Medio de pago</label><select class="fs" id="pi-medio"><option>Transferencia</option><option>Efectivo</option><option>Mixto</option></select></div>
     <div class="fg"><label class="fl">Fecha</label><input class="fi" type="date" id="pi-fecha"></div>
+  </div>
+  <div class="fg">
+    <label class="fl">¿Generaste factura?</label>
+    <div style="display:flex;gap:8px">
+      <button class="ebtn" id="pi-ebtn-nofact" style="flex:1">Sin factura</button>
+      <button class="ebtn" id="pi-ebtn-fact" style="flex:1">✓ Con factura (IVA 21%)</button>
+    </div>
   </div>
   <div class="ma"><button class="btn-cancel" id="pi-cancel">Cancelar</button><button class="btn btn-pu" id="pi-save">Guardar proyecto</button></div>
 </div>
@@ -487,6 +505,7 @@ window.addEventListener('DOMContentLoaded', function() {
 var MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 var MC=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
 var hoy=new Date(), mes=hoy.getMonth(), anio=hoy.getFullYear();
+var hoyMes=hoy.getMonth(), hoyAnio=hoy.getFullYear();
 var todayStr=hoy.toISOString().split('T')[0];
 
 // STATE
@@ -548,7 +567,7 @@ function mk(m,a){return (a!==undefined?a:anio)+'-'+((m!==undefined?m:mes)+1<10?'
 function mka(){return mk(mes,anio);}
 function fmt(n){return '$ '+Math.round(n||0).toLocaleString('es-AR');}
 function fmtFecha(f){if(!f)return '';var p=f.split('-');return parseInt(p[2])+'/'+parseInt(p[1]);}
-function esMesActualOFuturo(m,a){return a>anio||(a===anio&&m>=mes);}
+function esMesActualOFuturo(m,a){return a>hoyAnio||(a===hoyAnio&&m>=hoyMes);}
 // Es anterior al inicio del cliente
 function esAntesDeInicio(m,a,c){return a<c.inicioAnio||(a===c.inicioAnio&&m<c.inicioMes);}
 function g(id){return document.getElementById(id);}
@@ -576,9 +595,20 @@ g('ing-cl').addEventListener('change',function(){mostrarSug(this.value,'ing-mont
 [['ing-cancel','modal-ing'],['pi-cancel','modal-proy-ing'],['eg-cancel','modal-eg'],['deu-cancel','modal-deu'],['cl-cancel','modal-cl'],['mgc-cancel','modal-gcell']].forEach(function(p){var b=g(p[0]);if(b)b.addEventListener('click',function(){closeM(p[1]);});});
 
 var estadoSel='pendiente';
-function setEstado(e){estadoSel=e;g('ebtn-pen').className='ebtn'+(e==='pendiente'?' sel-pen':'');g('ebtn-pag').className='ebtn'+(e==='pagado'?' sel-pag':'');g('gc-monto-lbl').textContent=e==='pendiente'?'esperado (ARS)':'recibido (ARS)';g('gc-medio-g').style.display=e==='pagado'?'block':'none';g('gc-fecha-g').style.display=e==='pagado'?'block':'none';}
+var facturadoSel='no';
+var piFacturadoSel='no';
+
+function setEstado(e){estadoSel=e;g('ebtn-pen').className='ebtn'+(e==='pendiente'?' sel-pen':'');g('ebtn-pag').className='ebtn'+(e==='pagado'?' sel-pag':'');g('gc-monto-lbl').textContent=e==='pendiente'?'esperado (ARS)':'recibido (ARS)';g('gc-medio-g').style.display=e==='pagado'?'block':'none';g('gc-fecha-g').style.display=e==='pagado'?'block':'none';g('gc-fact-g').style.display=e==='pagado'?'block':'none';}
 g('ebtn-pen').addEventListener('click',function(){setEstado('pendiente');});
 g('ebtn-pag').addEventListener('click',function(){setEstado('pagado');});
+
+function setFacturado(f){facturadoSel=f;g('ebtn-nofact').className='ebtn'+(f==='no'?' sel-pen':'');g('ebtn-fact').className='ebtn'+(f==='si'?' sel-pag':'');}
+g('ebtn-nofact').addEventListener('click',function(){setFacturado('no');});
+g('ebtn-fact').addEventListener('click',function(){setFacturado('si');});
+
+function setPiFacturado(f){piFacturadoSel=f;g('pi-ebtn-nofact').className='ebtn'+(f==='no'?' sel-pen':'');g('pi-ebtn-fact').className='ebtn'+(f==='si'?' sel-pag':'');}
+g('pi-ebtn-nofact').addEventListener('click',function(){setPiFacturado('no');});
+g('pi-ebtn-fact').addEventListener('click',function(){setPiFacturado('si');});
 
 function abrirCelda(cid,mesKey){
   var c=S.clientes.find(function(x){return x.id===cid;});if(!c)return;
@@ -586,8 +616,8 @@ function abrirCelda(cid,mesKey){
   var cobro=S.cobros.find(function(x){return x.clienteId===cid&&x.mesKey===mesKey;});
   g('mgc-title').textContent=c.nombre;g('mgc-sub').textContent=MESES[m2]+' '+a2;
   g('gc-cid').value=cid;g('gc-mk').value=mesKey;
-  if(cobro){setEstado(cobro.estado||'pagado');g('gc-monto').value=cobro.monto;g('gc-desc').value=cobro.desc||'';g('gc-medio').value=cobro.medio||'Transferencia';g('gc-fecha').value=cobro.fecha||todayStr;g('gc-del-g').style.display='block';}
-  else{setEstado('pendiente');g('gc-monto').value=c.monto||'';g('gc-desc').value='';g('gc-medio').value='Transferencia';g('gc-fecha').value=todayStr;g('gc-del-g').style.display='none';}
+  if(cobro){setEstado(cobro.estado||'pagado');setFacturado(cobro.facturado||'no');g('gc-monto').value=cobro.monto;g('gc-desc').value=cobro.desc||'';g('gc-medio').value=cobro.medio||'Transferencia';g('gc-fecha').value=cobro.fecha||todayStr;g('gc-del-g').style.display='block';}
+  else{setEstado('pendiente');setFacturado('no');g('gc-monto').value=c.monto||'';g('gc-desc').value='';g('gc-medio').value='Transferencia';g('gc-fecha').value=todayStr;g('gc-del-g').style.display='none';}
   g('gc-sug').innerHTML='Honorario acordado: <span class="sug-lnk" id="gc-sug-lnk">'+fmt(c.monto)+'</span>';
   var lnk=g('gc-sug-lnk');if(lnk)lnk.addEventListener('click',function(){g('gc-monto').value=c.monto;});
   openM('modal-gcell');
@@ -596,7 +626,7 @@ g('mgc-save').addEventListener('click',function(){
   var cid=parseInt(g('gc-cid').value),mesKey=g('gc-mk').value,monto=parseFloat(g('gc-monto').value);
   if(!monto||monto<=0){toast('Ingresá el monto','err');return;}
   S.cobros=S.cobros.filter(function(x){return !(x.clienteId===cid&&x.mesKey===mesKey);});
-  S.cobros.push({id:Date.now(),clienteId:cid,mesKey:mesKey,monto:monto,desc:g('gc-desc').value,medio:g('gc-medio').value,estado:estadoSel,fecha:g('gc-fecha').value||todayStr,tipo:'fijo'});
+  S.cobros.push({id:Date.now(),clienteId:cid,mesKey:mesKey,monto:monto,desc:g('gc-desc').value,medio:g('gc-medio').value,estado:estadoSel,facturado:facturadoSel,fecha:g('gc-fecha').value||todayStr,tipo:'fijo'});
   save();closeM('modal-gcell');renderAll();toast(estadoSel==='pagado'?'✓ Cobro registrado':'⏳ Pendiente cargado');
 });
 g('gc-del-btn').addEventListener('click',function(){
@@ -607,7 +637,7 @@ g('gc-del-btn').addEventListener('click',function(){
 });
 
 function abrirIng(cid){g('ing-eid').value='';poblarSel('ing-cl');g('ing-cl').value=cid||'';if(cid)mostrarSug(cid,'ing-monto','ing-sug');else g('ing-sug').innerHTML='';g('ing-monto').value='';g('ing-desc').value='';g('ing-medio').value='Transferencia';g('ing-fecha').value=todayStr;openM('modal-ing');}
-function abrirProyIng(){g('pi-eid').value='';['pi-cliente','pi-desc','pi-monto'].forEach(function(i){g(i).value='';});g('pi-medio').value='Transferencia';g('pi-fecha').value=todayStr;openM('modal-proy-ing');}
+function abrirProyIng(){g('pi-eid').value='';['pi-cliente','pi-desc','pi-monto'].forEach(function(i){g(i).value='';});g('pi-medio').value='Transferencia';g('pi-fecha').value=todayStr;setPiFacturado('no');openM('modal-proy-ing');}
 
 g('btn-add-ing').addEventListener('click',function(){abrirIng(null);});
 g('btn-add-proy-ing').addEventListener('click',function(){abrirProyIng();});
@@ -640,7 +670,7 @@ g('pi-save').addEventListener('click',function(){
   var eid=g('pi-eid').value;
   var fecha=g('pi-fecha').value||todayStr;
   var mesKeyProy=fecha.substring(0,7);
-  var obj={id:eid?parseInt(eid):Date.now(),cliente:cliente,desc:g('pi-desc').value,monto:monto,medio:g('pi-medio').value,fecha:fecha,mesKey:mesKeyProy,tipo:'proyecto'};
+  var obj={id:eid?parseInt(eid):Date.now(),cliente:cliente,desc:g('pi-desc').value,monto:monto,medio:g('pi-medio').value,fecha:fecha,mesKey:mesKeyProy,tipo:'proyecto',facturado:piFacturadoSel};
   if(eid){var idx=S.proyIngresos.findIndex(function(x){return x.id==eid;});if(idx>=0)S.proyIngresos[idx]=obj;toast('✓ Actualizado');}else{S.proyIngresos.push(obj);toast('✓ Proyecto guardado');}
   save();closeM('modal-proy-ing');renderAll();
 });
@@ -685,7 +715,7 @@ document.addEventListener('click',function(e){
   if(a==='gcell'){abrirCelda(id,mk2);}
   if(a==='edit-ing'){var ing=S.cobros.find(function(x){return x.id===id;});if(!ing)return;poblarSel('ing-cl');g('ing-eid').value=id;g('ing-cl').value=ing.clienteId;mostrarSug(ing.clienteId,'ing-monto','ing-sug');g('ing-monto').value=ing.monto;g('ing-desc').value=ing.desc||'';g('ing-medio').value=ing.medio||'Transferencia';g('ing-fecha').value=ing.fecha||todayStr;openM('modal-ing');}
   if(a==='del-ing'){if(!confirm('¿Eliminar?'))return;S.cobros=S.cobros.filter(function(x){return x.id!==id;});save();renderAll();toast('Eliminado');}
-  if(a==='edit-pi'){var pi=S.proyIngresos.find(function(x){return x.id===id;});if(!pi)return;g('pi-eid').value=id;g('pi-cliente').value=pi.cliente;g('pi-desc').value=pi.desc||'';g('pi-monto').value=pi.monto;g('pi-medio').value=pi.medio||'Transferencia';g('pi-fecha').value=pi.fecha||todayStr;openM('modal-proy-ing');}
+  if(a==='edit-pi'){var pi=S.proyIngresos.find(function(x){return x.id===id;});if(!pi)return;g('pi-eid').value=id;g('pi-cliente').value=pi.cliente;g('pi-desc').value=pi.desc||'';g('pi-monto').value=pi.monto;g('pi-medio').value=pi.medio||'Transferencia';g('pi-fecha').value=pi.fecha||todayStr;setPiFacturado(pi.facturado||'no');openM('modal-proy-ing');}
   if(a==='del-pi'){if(!confirm('¿Eliminar?'))return;S.proyIngresos=S.proyIngresos.filter(function(x){return x.id!==id;});save();renderAll();toast('Eliminado');}
   if(a==='edit-eg'){var eg=S.egresos.find(function(x){return x.id===id;});if(!eg)return;g('eg-eid').value=id;g('eg-tipo').value=eg.tipo||'jillo';g('eg-desc').value=eg.desc;g('eg-cat').value=eg.cat;g('eg-monto').value=eg.monto;g('eg-fecha').value=eg.fecha||todayStr;openM('modal-eg');}
   if(a==='del-eg'){if(!confirm('¿Eliminar?'))return;S.egresos=S.egresos.filter(function(x){return x.id!==id;});save();renderAll();toast('Eliminado');}
@@ -810,7 +840,7 @@ function rClientes(){
       var cobro=getCobClienteMes(c.id,col.k);
       if(!cobro){h+='<td style="text-align:center;'+bgExtra+'"><button class="gcell pen" data-a="gcell" data-id="'+c.id+'" data-mk="'+col.k+'"><span class="gcell-top">✗</span><span class="gcell-sub">sin cobro</span></button></td>';}
       else if(cobro.estado==='pendiente'){h+='<td style="text-align:center;'+bgExtra+'"><button class="gcell pre" data-a="gcell" data-id="'+c.id+'" data-mk="'+col.k+'" title="Esperado: '+fmt(cobro.monto)+'"><span class="gcell-top">⏳</span><span class="gcell-sub">'+fmt(cobro.monto).replace('$ ','')+'</span></button></td>';}
-      else{h+='<td style="text-align:center;'+bgExtra+'"><button class="gcell pag" data-a="gcell" data-id="'+c.id+'" data-mk="'+col.k+'" title="'+fmt(cobro.monto)+(cobro.fecha?' · '+fmtFecha(cobro.fecha):'')+'"><span class="gcell-top">✓</span><span class="gcell-sub">'+fmt(cobro.monto).replace('$ ','')+'</span></button></td>';}
+      else{var factIcon=cobro.facturado==='si'?'🧾':'';h+='<td style="text-align:center;'+bgExtra+'"><button class="gcell pag" data-a="gcell" data-id="'+c.id+'" data-mk="'+col.k+'" title="'+fmt(cobro.monto)+(cobro.facturado==='si'?' · Con factura':'')+(cobro.fecha?' · '+fmtFecha(cobro.fecha):'')+'"><span class="gcell-top">✓'+factIcon+'</span><span class="gcell-sub">'+fmt(cobro.monto).replace('$ ','')+'</span></button></td>';}
     });
     var cobUlt=getCobClienteMes(c.id,ultimoMes);
     var cobradoUlt=cobUlt&&cobUlt.estado==='pagado'?cobUlt.monto:0;
@@ -841,26 +871,27 @@ function rClientes(){
 }
 
 function rIngresos(){
-  // Mostrar todos los cobros del año, no solo el mes navegado
-  var todosFijos=S.cobros.filter(function(x){return x.estado==='pagado'&&x.mesKey&&x.mesKey.indexOf(anio+'-')===0;});
-  var todosProys=S.proyIngresos.filter(function(x){return x.mesKey&&x.mesKey.indexOf(anio+'-')===0;});
+  // Ingresos muestra TODO - grilla + proyectos de todos los meses
+  // No filtra por mes navegado para que los cobros de grilla aparezcan siempre
+  var fijos=S.cobros.filter(function(x){return x.estado==='pagado';}).sort(function(a,b){return new Date(b.fecha)-new Date(a.fecha);});
+  var proyItems=S.proyIngresos.slice().sort(function(a,b){return new Date(b.fecha)-new Date(a.fecha);});
 
-  var totFijos=todosFijos.reduce(function(a,x){return a+x.monto;},0);
-  var totProy=todosProys.reduce(function(a,x){return a+x.monto;},0);
-  var proy=getProy();
+  var totFijos=fijos.reduce(function(a,x){return a+x.monto;},0);
+  var totProy=proyItems.reduce(function(a,x){return a+x.monto;},0);
 
   g('ing-tot').textContent=fmt(totFijos+totProy);
   g('ing-fijos').textContent=fmt(totFijos);
   g('ing-proyectos').textContent=fmt(totProy);
-  // Por cobrar = lo que falta cobrar de meses vencidos
-  var deuFijos=getDeudaTotalFijos();
-  g('ing-prc').textContent=fmt(deuFijos);
+  g('ing-prc').textContent=fmt(getDeudaTotalFijos());
+  var totFacturado=fijos.filter(function(x){return x.facturado==='si';}).reduce(function(a,x){return a+x.monto;},0)+
+    proyItems.filter(function(x){return x.facturado==='si';}).reduce(function(a,x){return a+x.monto;},0);
+  var totNoFact=(totFijos+totProy)-totFacturado;
+  var ivaAPagar=Math.round(totFacturado*0.21);
+  g('ing-fact').textContent=fmt(totFacturado);
+  g('ing-nofact').textContent=fmt(totNoFact);
+  g('ing-iva').textContent=fmt(ivaAPagar);
 
-  // Ordenar por fecha descendente
-  var fijos=todosFijos.slice().sort(function(a,b){return new Date(b.fecha)-new Date(a.fecha);});
-  var proyItems=todosProys.slice().sort(function(a,b){return new Date(b.fecha)-new Date(a.fecha);});
-
-  if(fijos.length===0&&proyItems.length===0){g('lista-ing').innerHTML='<div class="empty"><div class="eei">💰</div><div class="eet">Sin ingresos cobrados este año</div></div>';return;}
+  if(fijos.length===0&&proyItems.length===0){g('lista-ing').innerHTML='<div class="empty"><div class="eei">💰</div><div class="eet">Sin ingresos registrados</div></div>';return;}
 
   var h='';
   if(fijos.length>0){
@@ -869,12 +900,13 @@ function rIngresos(){
       var c=S.clientes.find(function(cl){return cl.id===x.clienteId;});
       var parts=x.mesKey?x.mesKey.split('-'):[];
       var mesLbl=parts.length>1?MC[parseInt(parts[1])-1]+' '+parts[0]:'';
-      return '<div class="item"><div class="idot" style="background:var(--green)"></div><div class="ibody"><div class="iname">'+(c?c.nombre:'—')+'</div><div class="idesc">'+(x.desc||'Sin detalle')+' · '+x.medio+(mesLbl?' · '+mesLbl:'')+'</div></div><div class="iright"><span class="imonto" style="color:var(--green)">'+fmt(x.monto)+'</span><button class="ibtn-e" data-a="edit-ing" data-id="'+x.id+'">✎</button><button class="ibtn" data-a="del-ing" data-id="'+x.id+'">✕</button></div></div>';
+      var factBadge=x.facturado==='si'?'<span class="badge bb" style="font-size:9px">Con factura</span>':'<span class="badge bgr" style="font-size:9px">Sin factura</span>';
+      return '<div class="item"><div class="idot" style="background:var(--green)"></div><div class="ibody"><div class="iname" style="display:flex;align-items:center;gap:8px">'+(c?c.nombre:'—')+factBadge+'</div><div class="idesc">'+(x.desc||'Sin detalle')+' · '+(x.medio||'')+(mesLbl?' · <strong>'+mesLbl+'</strong>':'')+'</div></div><div class="iright"><span class="imonto" style="color:var(--green)">'+fmt(x.monto)+'</span><button class="ibtn-e" data-a="edit-ing" data-id="'+x.id+'">✎</button><button class="ibtn" data-a="del-ing" data-id="'+x.id+'">✕</button></div></div>';
     }).join('');
   }
   if(proyItems.length>0){
     h+='<div style="padding:10px 18px 6px;font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid var(--border);background:var(--purple-bg)">⭐ Proyectos</div>';
-    h+=proyItems.map(function(x){return '<div class="item"><div class="idot" style="background:var(--purple)"></div><div class="ibody"><div class="iname">'+x.cliente+'</div><div class="idesc">'+(x.desc||'Sin detalle')+' · '+x.medio+(x.fecha?' · '+fmtFecha(x.fecha):'')+'</div></div><div class="iright"><span class="imonto" style="color:var(--purple)">'+fmt(x.monto)+'</span><button class="ibtn-e" data-a="edit-pi" data-id="'+x.id+'">✎</button><button class="ibtn" data-a="del-pi" data-id="'+x.id+'">✕</button></div></div>';}).join('');
+    h+=proyItems.map(function(x){var factBadgeP=x.facturado==='si'?'<span class="badge bb" style="font-size:9px">Con factura</span>':'<span class="badge bgr" style="font-size:9px">Sin factura</span>';return '<div class="item"><div class="idot" style="background:var(--purple)"></div><div class="ibody"><div class="iname" style="display:flex;align-items:center;gap:8px">'+x.cliente+factBadgeP+'</div><div class="idesc">'+(x.desc||'Sin detalle')+' · '+(x.medio||'')+(x.fecha?' · '+fmtFecha(x.fecha):'')+'</div></div><div class="iright"><span class="imonto" style="color:var(--purple)">'+fmt(x.monto)+'</span><button class="ibtn-e" data-a="edit-pi" data-id="'+x.id+'">✎</button><button class="ibtn" data-a="del-pi" data-id="'+x.id+'">✕</button></div></div>';}).join('');
   }
   g('lista-ing').innerHTML=h;
 }
